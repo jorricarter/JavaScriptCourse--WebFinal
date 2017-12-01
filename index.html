@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!--make size of program fit different window sizes-->
+    <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Battloids</title>
+    <!--create canvas for creating game-->
+    <style>
+        canvas {
+            /*make a border showing game limits in case page background becomes dark.*/
+            border:2px solid #eee;
+            /*game background will be black for visibility, to differentiate between game and page, and to add nostalgia from older space-game styles.*/
+            background-color: #000;
+        }
+    </style>
+</head>
+<!--load game-->
+<body onload="loadGame()">
+<script>
+    //first ship(maybe only ship)
+    var ship1;
+    //friend's ship
+    var ship2;
+    //obstacles... lol.
+    var obstacles=[];
+    //score... lol.
+    var score;
+    //change size of canvas for testing. Could later be used to increase difficulty or players. Number is ratio of canvas:screen.
+    var gameSize = .8;
+    var gameWidth = screen.width*size;
+    var gameHeight = screenHeight*size;
+    //changing speed might mess up the scoring ratio because score might be dependant on a game clock rather than per-object or a universal-clock.
+    var intervalSpeed = 20;
+    //set playing mat for game
+    gameCanvas = {
+        //create canvas
+        canvas:document.createElement("canvas"),
+        //function of gameCanvas to start game.
+        start:function() {
+            //set dimensions = leave some empty space on sides of screen to avoid bugs and for a better looking game.
+            this.canvas.width = screen.width * .8;
+            this.canvas.height = screen.height * .8;
+            //what type of canvas
+            this.canvas.getContext("2d");
+            //insert at top of body
+            document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+            //keep track of score(points judged by interval, but fancy point system can be implemented later.
+            this.scoreCount = 0;
+            //speed of game. How often the game moves one step. (later can be modified to control difficulty)
+            this.interval = setInterval(updateGameCanvas, intervalSpeed);
+        },
+        //this function kind-of refreshes the canvas. otherwise, the graphics won't display properly.
+        clear:function(){
+            //this will tell the function which coordinates can be reset.(from upper left to lower right"fullscreen")
+            this.context.clearRect(0, 0, gameWidth, gameHeight);
+        }
+    }
+    //method or function to start game the game
+    function loadGame() {
+        //create new superclass object in game(height, width, color, positionX, positionY, gravity)
+        ship1 = new object(15, 25, "blue", gameWidth/2, gameHeight/2, .01);
+        //create score object(font format, color, X, Y)
+        score = new scoreTracker("15px Consolas", "white", 10, 20);
+        //startgame using gameCanvas's start method. **this could be useful in future programing to give individual objects their own start functions or other types of functions that only they will use.
+        gameCanvas.start()
+    }
+    //what is a scoreTracker #Constructor
+    function scoreTracker(font, color, startX, startY) {
+        //score starts at 0
+        this.score = 0;
+        //starting x position
+        this.x = startX;
+        //starting y position
+        this.y = startY;
+        //when this item's update function is called, here's what it should do
+        this.update = function(){
+            //set the font of the score keeper to "15 pixels" and "Consolas"
+            gameCanvas.context.font = font;
+            //set the color of the scorekeeper to "white"
+            gameCanvas.context.fillStyle = color;
+            //set the text of the scorekeeper and where to put it
+            gameCanvas.context.fillText(this.text, this.x, this.y);
+        }
+    }
+    //what is an object? #Constructor
+    function object(width, height, color, startX, startY, gravity) {
+        //width of ship. Blah, blah, blah.
+        this.width = width;
+        //Height, blah, blah, blah.
+        this.height = height;
+        //starting X coordinate on canvas
+        this.x = startX;
+        //starting Y coordinate on canvas
+        this.y = startY;
+        //gravity is ACTUALLY the rate at which the ship falls to the bottom of the screen. I might use this to make other objects fall, but at this time, I am using a separate formula for that.
+        this.gravity = gravity;
+        //This is the rate at which an object will move. It will rise when someone holds an arrow key.
+        this.momentum = 0;
+        //assign this before if statement to reduce redundancy of identical code on both sides of the if/else statement.
+        ctx = gameCanvas.context;
+        //If it's not a ship gravity will be 0.
+        if (gravity==0) {
+            //since it is a stationary(technically, but not literally) object, do this.
+            this.update = function() {
+                //when this not-ship object updates make it this color;
+                ctx.fillStyle = color;
+                //make it a rectangle(starting x, starting y, opposite corner x, opposite corner y);
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+            }
+            //since it IS a ship, do this instead:
+        }else{
+            //this is how a ship should update
+            this.update = function() {
+                //make the ship this color
+                ctx.fillStyle = color;
+                //start drawing on the canvas
+                ctx.beginPath();
+                //start at these coordinates(startX - half the width to start at the left wing of the ship, startY);
+                ctx.moveTo(this.x-(this.width/2), this.y);
+                //draw a line to the right wing of the ship
+                ctx.lineTo(this.x+(this.width/2), this.y);
+                //draw a line to the top of the ship to complete the triangle.
+                ctx.lineTo(this.x, this.y-this.height);
+                //finish the last line by returning to the initial point of drawing.
+                ctx.closePath();
+                //fill in the polygon (ship)
+                ctx.fill();
+            }
+            //since this is a ship, let's also give it limits so it can't fly off screen
+            this.move = function() {
+                //drag(flying term) will start pulling the ship giving it backwards momentum
+                this.momentum += this.gravity;
+                //the drag will pull the ship back which will make it's Y coordinate raise.
+                this.y += this.momentum;
+                //if the ship's coordinates reach the back of the screen (gameHeight is the highest Y value on the canvas.
+                if (this.y > gameHeight) {
+                    //since ship is technically off-screen, put it back on edge of screen.
+                    this.y = gameHeight;
+                    //stop momentum so ship isn't stuck on edge of screen. High momentum requires you to cool down before going in opposite direction.
+                    this.momentum = 0;
+                }
+                //if (back of ship to top of canvas < ship's height) {what to do if ship is off screen}
+                if (this.y < this.height) {
+                    //since ship is off screen, put it back on screen
+                    this.y = this.height;
+                    //reset momentum so player doesn't have to wait for it to cool down before flying opposite direction.
+                    this.momentum = 0;
+                }
+            }
+            //since this is a ship, what to do for crashes
+            this.crash = function(object) {
+                //define the perimeter of the ship's "hitbox". a hitbox is what area of an object needs to be hit for it to emulate damage.
+                var left = this.x - this.width / 3;
+                //The ship extends to 1/2 width on either side, but I put it's boundaries as 1/3 width to make the game more fun and allow for adrenaline spiking close calls.
+                var right = this.x + this.width / 3;
+                //I do a similar concept with the height. even though the height is exactly as depicted, I designated the hitbox boundary at 1/2 height. Since it's a triangle, this will also produce less false positives for crashing. That would be no fun.
+                var top = this.y - this.height / 2;
+                //bootom is bottom of the ship
+                var bottom = this.y;
+                //designate boundaries of other object.
+                var objectLeft = object.x;
+                //since all obstacles are squares, it is simpler to designate their boundaries.
+                var objectRight = object.x + object.width;
+                //it's top is it's y since obstacles are made using fillRect.
+                var objectTop = object.y;
+                //y axis value goes up as the direction goes down so bottom is y minus object height.
+                var objectBottom = object.y + object.height;
+                //if the edges of the hitbox are NOT in the other object,
+                if ((bottom < objectTop) || (top > objectBottom) || (right < objectLeft) || (left > objectRight)) {
+                    //since objects NOT overlapping {return false for crash}
+                    return false;
+                }
+                //since objects are overlapping {return true for crash};
+                return true;
+            }
+        }
+    }
+</script>
+</body>
+</html>
