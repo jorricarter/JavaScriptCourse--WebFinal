@@ -34,7 +34,7 @@
     //how often obstacles should appear
     var obstacleRate = 100;
     //speed at which obstacles travel down the screen
-    var obstacleSpeed = 1.5;
+    var obstacleSpeed = 2;
     //set playing mat for game
     gameCanvas = {
         intervalID:0,
@@ -61,9 +61,8 @@
         },
         //to stop game when crash occurs
         stop: function() {
-            console.log("finalScore is updating")
-            var finalScore = new ScoreTracker("15px Consolas", "white", 20, 20);
-            finalScore.update();
+            score = new ScoreTracker("30px Consolas", "purple", gameWidth/2-100, gameHeight/2);
+            score.update();
             clearInterval(this.intervalID);
         }
     };
@@ -90,14 +89,13 @@
         this.x = x;
         //starting y position
         this.y = y;
-        //when this item's update function is called, here's what it should do
         this.update = function(){
             //set the font of the score keeper to "15 pixels" and "Consolas"
             gameCanvas.context.font = font;
             //set the color of the scorekeeper to "white"
             gameCanvas.context.fillStyle = color;
             //set the text of the scorekeeper and where to put it
-            gameCanvas.context.fillText(this.text, this.x, this.y);
+            gameCanvas.context.fillText("SCORE: " + gameCanvas.scoreCount, this.x, this.y);
         }
     }
     //what is an object? #Constructor
@@ -142,17 +140,13 @@
             };
             //since this is a ship, let's also give it limits so it can't fly off screen
             this.move = function() {
-                //if the ship's coordinates reach the back of the screen (gameHeight is the highest Y value on the canvas.
-                if (this.y > gameHeight) {
-                    //since ship is technically off-screen, put it back on edge of screen.
-                    this.y = gameHeight;
-                }
+                //"if ship reaches back of screen, don't fall off" if (ship lateral coordinate > height of screen) {put ship on edge of screen};
+                if (this.y > gameHeight) this.y = gameHeight;
                 //if (back of ship to top of canvas < ship's height) {what to do if ship is off screen}
-                if (this.y < this.height) {
-                    //since ship is off screen, put it back on screen
-                    this.y = this.height;
-                }
-            };
+                if (this.y < this.height) this.y = this.height;
+                //if (ship's.horizontalCoordinate > rightCanvasCoordinate) ship's.horizontalCoordinate = canvasRightEdgeCoordinate-(halfOfShipThatWouldFallOffScreen)
+                if (this.x > gameWidth) this.x = gameWidth-(this.width/2);
+            }
             //since this is a ship, what to do for crashes
             this.crash = function(object) {
                 //define the perimeter of the ship's "hitbox". a hitbox is what area of an object needs to be hit for it to emulate damage.
@@ -183,24 +177,27 @@
     }
     //update game, check for crashes
     function updateGameCanvas() {
-        //for each obstacle on map, see if it's coordinates match the coordinates of the ship's hitbox(meaning the objects overlap and crash)
-        for (var i = 0; i < obstacles.length; i += 1) {
-            //if ship's hitbox and an obstacle overlap {there is a crash}
-            if (ship1.crash(obstacles[i])) {
-                //since there is a crash, return to end program. make a more elegant way of stopping game later.
-                gameCanvas.stop();
-            }
-        }
         //restart canvas screen so display is able to update properly
         gameCanvas.clear();
         //make score increase each time the screen updates to raise the score over time
         gameCanvas.scoreCount += 1;
+        //this will make the game check for collisions half as often making it run more smoothly since collisions are probably a majority of the checks performed in this program
+        if (gameCanvas.scoreCount % 5 === 0) {
+            //for each obstacle on map, see if it's coordinates match the coordinates of the ship's hitbox(meaning the objects overlap and crash)
+            for (var i = 0; i < obstacles.length; i += 1) {
+                //if ship's hitbox and an obstacle overlap {there is a crash}
+                if (ship1.crash(obstacles[i])) {
+                    //since there is a crash, return to end program. make a more elegant way of stopping game later.
+                    gameCanvas.stop();
+                }
+            }
+        }
         //every .15 seconds, add obstacle
-        if ((gameCanvas.scoreCount / obstacleRate) % 1 === 0) {
+        if (gameCanvas.scoreCount % obstacleRate === 0) {
             //minimum gap between obstacles so they aren't impossible
             var minGap = 80;
             //maximum gap between obstacles so it's not too easy
-            var maxGap = 200;
+            var maxGap = 180;
             //randomly create size of gap
             var gap = Math.floor(Math.random()*(maxGap-minGap+1)+minGap);
             //the farthest left a gap can be is the far left of the screen
@@ -221,8 +218,6 @@
             //update position of obstacle on screen
             obstacles[i].update();
         }
-        //how the score will look
-        score.text="SCORE: " + gameCanvas.scoreCount;
         //update score
         score.update();
         //move ship in whichever direction it is being pushed(if any)
@@ -230,7 +225,6 @@
         //update ship's display on the screen
         ship1.update();
     }
-    //todo stop game on collision; fix left off screen; click all + so teacher can see code when grading!!!
 </script>
 <br>
 <p>Use arrow keys button to avoid collisions</p>
