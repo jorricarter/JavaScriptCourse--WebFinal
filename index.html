@@ -8,7 +8,7 @@
     <style>
         canvas {
             /*make a border showing game limits in case page background becomes dark.*/
-            border:2px solid #eee;
+            border: 2px solid #eee;
             /*game background will be black for visibility, to differentiate between game and page, and to add nostalgia from older space-game styles.*/
             background-color: #000;
         }
@@ -22,13 +22,13 @@
     //friend's ship
     var ship2;
     //list of obstacles to iterate through when checking for overlapping coordinates(collisions)
-    var obstacles=[];
+    var obstacles = [];
     //score... lol.
     var score;
     //change size of canvas for testing. Could later be used to increase difficulty or players. Number is ratio of canvas:screen.
     var gameSize = .8;
-    var gameWidth = screen.width*gameSize;
-    var gameHeight = screen.height*gameSize;
+    var gameWidth = screen.width * gameSize;
+    var gameHeight = screen.height * gameSize;
     //changing speed might mess up the scoring ratio because score might be dependant on a game clock rather than per-object or a universal-clock.
     var interval = 1;
     //how often obstacles should appear
@@ -37,11 +37,11 @@
     var obstacleSpeed = 2;
     //set playing mat for game
     gameCanvas = {
-        intervalID:0,
+        intervalID: 0,
         //create canvas
-        canvas:document.createElement("canvas"),
+        canvas: document.createElement("canvas"),
         //function of gameCanvas to start game.
-        start:function() {
+        start: function () {
             //set dimensions = leave some empty space on sides of screen to avoid bugs and for a better looking game.
             this.canvas.width = gameWidth;
             this.canvas.height = gameHeight;
@@ -55,23 +55,24 @@
             this.intervalID = setInterval(updateGameCanvas, interval);
         },
         //this function kind-of refreshes the canvas. otherwise, the graphics won't display properly.
-        clear:function(){
+        clear: function () {
             //this will tell the function which coordinates can be reset.(from upper left to lower right"fullscreen")
             this.context.clearRect(0, 0, gameWidth, gameHeight);
         },
         //to stop game when crash occurs
-        stop: function() {
-            score = new ScoreTracker("30px Consolas", "purple", gameWidth/2-100, gameHeight/2);
+        stop: function () {
+            score = new ScoreTracker("30px Consolas", "purple", gameWidth / 2 - 100, gameHeight / 2);
             score.update();
             clearInterval(this.intervalID);
         }
     };
     //this gives canvas an ear to listen for where the mouse is.
-    gameCanvas.canvas.addEventListener('mousemove', function(evt) {
+    gameCanvas.canvas.addEventListener('mousemove', function (evt) {
         //put ship's coordinates where mouse is.
         ship1.x = evt.clientX;
         ship1.y = evt.clientY;
     });
+
     //method or function to start game the game
     function loadGame() {
         //create new superclass object in game(width, height, color)
@@ -83,13 +84,14 @@
         //start game using gameCanvas's start method. **this could be useful in future programing to give individual objects their own start functions or other types of functions that only they will use.
         gameCanvas.start()
     }
+
     //what is a scoreTracker #Constructor
     function ScoreTracker(font, color, x, y) {
         //starting x position
         this.x = x;
         //starting y position
         this.y = y;
-        this.update = function(){
+        this.update = function () {
             //set the font of the score keeper to "15 pixels" and "Consolas"
             gameCanvas.context.font = font;
             //set the color of the scorekeeper to "white"
@@ -98,6 +100,7 @@
             gameCanvas.context.fillText("SCORE: " + gameCanvas.scoreCount, this.x, this.y);
         }
     }
+
     //what is an object? #Constructor
     function Object(width, height, color, x) {
         //width of ship or obstacle = Blah, blah, blah.
@@ -107,48 +110,48 @@
         //starting X coordinate on canvas
         this.x = x;
         //If it's not a ship, there will be an x coordinate assigned. (this can be expanded to allow for multiple types instead of only 2
-        if (x!=null) {
+        if (x != null) {
             //since it's an obstacle, start at top of screen
             this.y = 0;
             //since it is a stationary(technically, but not literally) object, do this.
-            this.update = function() {
+            this.update = function () {
                 //when this not-ship object updates make it this color;
                 gameCanvas.context.fillStyle = color;
                 //make it a rectangle(starting x, starting y, opposite corner x, opposite corner y);
                 gameCanvas.context.fillRect(this.x, this.y, this.width, this.height);
             };
             //since it IS a ship, do this instead:
-        }else{
+        } else {
             //since it's a ship, start it at the bottom of the screen. This gives player 2 seconds to start playing before potential collision(with obstacles) instead of .15 seconds.
             this.y = gameHeight;
             //this is how a ship should update
-            this.update = function() {
+            this.update = function () {
                 //make the ship this color
                 gameCanvas.context.fillStyle = color;
                 //start drawing on the canvas
                 gameCanvas.context.beginPath();
                 //start at these coordinates(startX - half the width to start at the left wing of the ship, startY);
-                gameCanvas.context.moveTo(this.x-(this.width/2), this.y);
+                gameCanvas.context.moveTo(this.x - (this.width / 2), this.y);
                 //draw a line to the right wing of the ship
-                gameCanvas.context.lineTo(this.x+(this.width/2), this.y);
+                gameCanvas.context.lineTo(this.x + (this.width / 2), this.y);
                 //draw a line to the top of the ship to complete the triangle.
-                gameCanvas.context.lineTo(this.x, this.y-this.height);
+                gameCanvas.context.lineTo(this.x, this.y - this.height);
                 //finish the last line by returning to the initial point of drawing.
                 gameCanvas.context.closePath();
                 //fill in the polygon (ship)
                 gameCanvas.context.fill();
             };
             //since this is a ship, let's also give it limits so it can't fly off screen
-            this.move = function() {
+            this.move = function () {
                 //"if ship reaches back of screen, don't fall off" if (ship lateral coordinate > height of screen) {put ship on edge of screen};
                 if (this.y > gameHeight) this.y = gameHeight;
                 //if (back of ship to top of canvas < ship's height) {what to do if ship is off screen}
                 if (this.y < this.height) this.y = this.height;
                 //if (ship's.horizontalCoordinate > rightCanvasCoordinate) ship's.horizontalCoordinate = canvasRightEdgeCoordinate-(halfOfShipThatWouldFallOffScreen)
-                if (this.x > gameWidth) this.x = gameWidth-(this.width/2);
-            }
+                if (this.x > gameWidth) this.x = gameWidth - (this.width / 2);
+            };
             //since this is a ship, what to do for crashes
-            this.crash = function(object) {
+            this.crash = function (object) {
                 //define the perimeter of the ship's "hitbox". a hitbox is what area of an object needs to be hit for it to emulate damage.
                 var left = this.x - this.width / 3;
                 //The ship extends to 1/2 width on either side, but I put it's boundaries as 1/3 width to make the game more fun and allow for adrenaline spiking close calls.
@@ -175,6 +178,7 @@
             }
         }
     }
+
     //update game, check for crashes
     function updateGameCanvas() {
         //restart canvas screen so display is able to update properly
@@ -199,17 +203,17 @@
             //maximum gap between obstacles so it's not too easy
             var maxGap = 180;
             //randomly create size of gap
-            var gap = Math.floor(Math.random()*(maxGap-minGap+1)+minGap);
+            var gap = Math.floor(Math.random() * (maxGap - minGap + 1) + minGap);
             //the farthest left a gap can be is the far left of the screen
             var minPos = 0;
             //the farthest to the right that a gap can start = the width of the screen - the size of the gap
-            var maxPos = gameWidth-gap;
+            var maxPos = gameWidth - gap;
             //randomize placement of the gap
-            var Pos = Math.floor(Math.random()*(maxPos-minPos+1)+minPos);
+            var Pos = Math.floor(Math.random() * (maxPos - minPos + 1) + minPos);
             //fill in the left side of the gap with an obstacle(add this obstacle to the list of obstacles
             obstacles.push(new Object(Pos, 12, "green", 0));
             //fill the right side of the gap with an obstacle(add this obstacle to the list of obstacles
-            obstacles.push(new Object(gameWidth-(Pos+gap), 12, "green", Pos+gap));
+            obstacles.push(new Object(gameWidth - (Pos + gap), 12, "green", Pos + gap));
         }
         //for (each obstacle) {move it down the screen 1 space
         for (i = 0; i < obstacles.length; i += 1) {
