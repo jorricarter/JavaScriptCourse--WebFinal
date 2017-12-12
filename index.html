@@ -131,15 +131,10 @@
                 //y axis value goes up as the direction goes down so bottom is y minus object height.
                 var objectBottom = object.y + object.height;
                 if ((bottom < objectTop) || (top > objectBottom) || (right < objectLeft) || (left > objectRight)) {
-                    //If the ship didnt crash with an object, see if another ship was created because we'll need to check if their coordinates overlap.
-                    if (ship2){
-
-
-                    }
                     //since objects NOT overlapping {return false for crash}
                     return false;
                 }
-                //since objects are overlapping {return true for crash};
+                //since objects are overlapping check if it's a ship. if it is; {return true for crash};
                 return true;
             }
         }
